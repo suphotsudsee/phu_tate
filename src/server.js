@@ -67,8 +67,8 @@ const db3 = mysql.createPool({
 const db4 = mysql.createPool({
 
   host: '192.168.25.122',
-  user: 'root',
-  password: '##212224##',
+  user: 'suphot',
+  password: '12345678',
   database: 'hdc',
   connectTimeout: 10000, // กำหนด timeout เป็น 10 วินาที
   waitForConnections: true,
@@ -182,10 +182,14 @@ chospcode.hospname
       ORDER BY 
         labfu.DATE_SERV DESC 
       LIMIT 10`;
-
+/*
       const [results1] = await db1.query(listLab, [idNumber]);
       const [results2] = await db2.query(listLab, [idNumber]);
       const [results3] = await db3.query(listLab, [idNumber]);
+*/      
+          // ดึงข้อมูลจากฐานข้อมูลที่ 4
+          console.log("Fetching data from db4 for ID:", idNumber);
+          console.log("Query:", listLab); 
       const [results4] = await db4.query(listLab, [idNumber]);
 
           // รวมผลลัพธ์ทั้งหมด
