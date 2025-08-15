@@ -23,6 +23,12 @@ const Login = () => {
     try {
       const response = await axios.post("/login", formData);
       const results = response?.data?.results;
+      console.log("Login response:", response.data);
+
+      // Check if login was successful and results are available
+      if (!results || results.length === 0) {
+        throw new Error("ไม่พบข้อมูลการตรวจ lab");
+      }
 
       if (response?.data?.success && results && results.length > 0) {
         navigate("/person", {

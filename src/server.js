@@ -1,170 +1,42 @@
+// server.js (fixed)
+// Express API for register/login with MySQL (mysql2/promise)
+// - Fixes: correct mysql2 result destructuring, safe unique check, cleaned logs
+// - Optional multi-DB lab lookup guarded to avoid ReferenceError
+
+require("dotenv").config();
 const express = require("express");
-const mysql = require("mysql2");
-const bodyParser = require("body-parser");
+const bcrypt = require("bcryptjs");
 const cors = require("cors");
-const bcrypt = require('bcryptjs');
+const bodyParser = require("body-parser");
+const mysql = require("mysql2/promise");
 
-// สร้างฟังก์ชันสำหรับเริ่มต้นเซิร์ฟเวอร์ Express
-function createServer() {
-  const app = express();
-  app.use(cors());
-  app.use(bodyParser.json());
+const PORT = process.env.PORT || 5001;
 
+// --- DB CONNECTIONS ---------------------------------------------------------
+// Primary DB (users)
 const db = mysql.createPool({
+  host: process.env.DB_HOST || "192.168.25.122",
+  user: process.env.DB_USER || "suphot",
+  password: process.env.DB_PASS || "12345678",
+  database: process.env.DB_NAME || "registrationdb",
+  waitForConnections: true,
   connectionLimit: 10,
-  host: '192.168.25.122',
-  user: 'suphot',
-  password: '12345678',
-  database: 'registrationdb',
-  queueLimit: 0,
-}).promise();
-
-/*
-const db = mysql.createConnection({
-  host: "localhost",
-  user: "suphot",
-  password: "u2eNBathhjUIS4Q2Vuxj",
-  database: "registrationdb",
 });
-*/
-/*
-const db1 = mysql.createPool({
-  host: '192.168.25.124',
-  user: 'root',
-  password: '##212224##',
-  database: 'hdc',
-  connectTimeout: 10000, // กำหนด timeout เป็น 10 วินาที
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0,
-}).promise();
 
-const db2 = mysql.createPool({
-
-  host: '192.168.25.109',
-  user: 'root',
-  password: '##212224##',
-  database: 'hdc',
-  connectTimeout: 10000, // กำหนด timeout เป็น 10 วินาที
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0,
-}).promise();
-
-const db3 = mysql.createPool({
-
-  host: '192.168.25.121',
-  user: 'root',
-  password: '##212224##',
-  database: 'hdc',
-  connectTimeout: 10000, // กำหนด timeout เป็น 10 วินาที
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0,
-}).promise();
-*/
-
-const db4 = mysql.createPool({
-
-  host: '192.168.25.122',
-  user: 'suphot',
-  password: '12345678',
-  database: 'hdc',
-  connectTimeout: 10000, // กำหนด timeout เป็น 10 วินาที
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0,
-}).promise();
-
-/*
-const db4 = mysql.createConnection({
-  host: "192.168.25.122",
-  user: "root",
-  password: "##212224##",
-  database: "hdc",
-});
-*/
-
-// db4.connect((err) => {
-//   if (err) {
-//     console.error("ไม่สามารถเชื่อมต่อกับฐานข้อมูล:", err);
-//     return;
-//   }
-//   console.log("เชื่อมต่อกับฐานข้อมูลสำเร็จ");
-// });
-
-  app.get("/person",async (req, res) => {
-try {
-  // Query data from MySQL
-  const [results] = await db.query("SELECT * FROM users WHERE first_name = 'suphot' limit 10");
-  res.json({
-    status: "success",
-    data: results,
-  });
-} catch (error) {
-  console.error(error);
-  res.status(500).json({
-    status: "error",
-    message: "Something went wrong.",
+// Optional: Secondary DB for lab results (enable via env)
+let db4 = null;
+if (process.env.DB4_HOST) {
+  db4 = mysql.createPool({
+  host: process.env.DB_HOST || "192.168.25.122",
+  user: process.env.DB_USER || "suphot",
+  password: process.env.DB_PASS || "12345678",
+  database: process.env.DB_NAME || "้hdc",
+    waitForConnections: true,
+    connectionLimit: 10,
   });
 }
-  });
 
-  app.post("/register", async (req, res) => {
-  const { firstName, lastName, idNumber, phone, password } = req.body;
-  console.log("======>",{...req.body});
-
-  try {
-    // ตรวจสอบว่าหมายเลขประจำตัวประชาชนมีอยู่ในฐานข้อมูลหรือไม่
-    const checkSql = "SELECT * FROM users WHERE id_number = ?";
-    const results = await db.query(checkSql, [idNumber]);
-
-    if (results.length > 0) {
-      // หากมีหมายเลขประจำตัวประชาชนอยู่แล้ว
-      res
-        .status(400)
-        .send({ message: "หมายเลขประจำตัวประชาชนนี้มีอยู่ในระบบแล้ว" });
-      return;
-    }
-
-    // หากไม่มีหมายเลขประจำตัวประชาชนในระบบ ให้บันทึกข้อมูลใหม่
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-    const insertSql =
-      "INSERT INTO users (first_name, last_name, id_number, phone, password) VALUES (?, ?, ?, ?, ?)";
-      await db.query(insertSql, [firstName, lastName, idNumber, phone, hashedPassword]);
-
-    res.send({ message: "ลงทะเบียนสำเร็จ" });
-  } catch (err) {
-    console.error("เกิดข้อผิดพลาด:", err);
-    res.status(500).send({ message: "เกิดข้อผิดพลาดในการลงทะเบียน" });
-  }
-  });
-
-
-  app.post("/login",async (req, res) => {
-  const { idNumber, password } = req.body;
-  console.log("======>",{...req.body});
-
-  try {
-    // ตรวจสอบว่าหมายเลขประจำตัวประชาชนมีอยู่ในฐานข้อมูลหรือไม่
-    const sql = "SELECT * FROM users WHERE id_number = ?";
-    const [results] = await db.query(sql, [idNumber]);
-
-    if (!results || results.length === 0) {
-      console.error("User ID number is missing");
-      res.send({ success: false });
-      return;
-    }
-    const user = results[0];
-    console.log("User data:", user);
-    const passwordIsValid = bcrypt.compareSync(password, user.password);
-    if (!passwordIsValid) {
-      res.send({ success: false });
-      return;
-    }else {
-
+// Example lab query (adjust to your schema)
     const listLab = `
       SELECT 
         person.HOSPCODE, person.PID, person.CID, person.NAME, person.LNAME, 
@@ -182,46 +54,124 @@ chospcode.hospname
       ORDER BY 
         labfu.DATE_SERV DESC 
       LIMIT 10`;
-/*
-      const [results1] = await db1.query(listLab, [idNumber]);
-      const [results2] = await db2.query(listLab, [idNumber]);
-      const [results3] = await db3.query(listLab, [idNumber]);
-*/      
-          // ดึงข้อมูลจากฐานข้อมูลที่ 4
-          console.log("Fetching data from db4 for ID:", idNumber);
-          console.log("Query:", listLab); 
-      const [results4] = await db4.query(listLab, [idNumber]);
 
-          // รวมผลลัพธ์ทั้งหมด
-          const allResults = [...results1, ...results2, ...results3, ...results4];
+// --- APP --------------------------------------------------------------------
+const app = express();
+app.use(cors());
+app.use(bodyParser.json());
 
-          // ตรวจสอบว่ามีข้อมูลใน allResults หรือไม่
-          if (allResults.length > 0) {
-            console.log("All Results Combined:", allResults);
-            res.send({ success: true, results: allResults });
-            return;
-          }
+app.get("/", (_req, res) => {
+  res.send({ ok: true, message: "API is running" });
+});
 
-          // กรณีไม่มีข้อมูล
-          res.send({ success: false, message: "ไม่พบข้อมูล" });
-      
+// --- REGISTER ---------------------------------------------------------------
+app.post("/register", async (req, res) => {
+  const { firstName, lastName, idNumber, phone, password } = req.body || {};
+  console.log("======>", { firstName, lastName, idNumber, phone }); // avoid logging password
+
+  if (!firstName || !lastName || !idNumber || !phone || !password) {
+    return res.status(400).send({ message: "กรอกข้อมูลให้ครบถ้วน" });
+  }
+
+  try {
+    // Check duplicate id_number
+    const checkSql = "SELECT 1 FROM users WHERE id_number = ? LIMIT 1";
+    const [rows] = await db.query(checkSql, [idNumber]);
+
+    if (rows.length > 0) {
+      return res.status(400).send({ message: "หมายเลขประจำตัวประชาชนนี้มีอยู่ในระบบแล้ว" });
     }
 
+    // Hash password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Insert
+    const insertSql = `
+      INSERT INTO users (first_name, last_name, id_number, phone, password)
+      VALUES (?, ?, ?, ?, ?)
+    `;
+    await db.query(insertSql, [firstName, lastName, idNumber, phone, hashedPassword]);
+
+    return res.send({ success: true, message: "ลงทะเบียนสำเร็จ" });
   } catch (err) {
-    console.error("เกิดข้อผิดพลาด:", err);
-    res.status(500).send({ message: "เกิดข้อผิดพลาดในการดึงข้อมูลการตรวจเลือด" });
+    console.error("REGISTER ERROR:", err);
+    return res.status(500).send({ success: false, message: "เกิดข้อผิดพลาดในการลงทะเบียน" });
   }
-  });
+});
 
-  return app;
-}
+// --- LOGIN ------------------------------------------------------------------
+app.post("/login", async (req, res) => {
+  const { idNumber, password } = req.body || {};
+  console.log("LOGIN ATTEMPT:", { idNumber }); // avoid logging password
 
-// หากไฟล์นี้ถูกเรียกโดยตรง ให้เริ่มเซิร์ฟเวอร์ทันที
-if (require.main === module) {
-  const app = createServer();
-  app.listen(5001, () => {
-    console.log("เซิร์ฟเวอร์กำลังทำงานที่พอร์ต 5001");
-  });
-}
+  if (!idNumber || !password) {
+    return res.status(400).send({ message: "ต้องระบุ idNumber และ password" });
+  }
 
-module.exports = createServer;
+  try {
+    // Find user by idNumber
+    const [rows] = await db.query(
+      "SELECT id, first_name, last_name, id_number, phone, password FROM users WHERE id_number = ? LIMIT 1",
+      [idNumber]
+    );
+
+    if (rows.length === 0) {
+      return res.status(401).send({ success: false, message: "ไม่พบบัญชีผู้ใช้" });
+    }
+
+    const user = rows[0];
+    const isValid = await bcrypt.compare(password, user.password);
+    if (!isValid) {
+      return res.status(401).send({ success: false, message: "รหัสผ่านไม่ถูกต้อง" });
+    }
+
+    // Minimal profile (exclude password)
+    const profile = {
+      id: user.id,
+      firstName: user.first_name,
+      lastName: user.last_name,
+      idNumber: user.id_number,
+      phone: user.phone,
+    };
+
+    // Optional: Query lab results (avoid ReferenceError if db4 is not configured)
+
+    let labResults = [];
+    if (db4) {
+      try {
+        const [results4] = await db4.query(listLab, [idNumber]);
+        labResults = results4 || [];
+        console.log("LAB RESULTS:", labResults); // Log lab results for debugging
+        
+      } catch (e) {
+        console.warn("LAB QUERY WARNING:", e.message);
+      }
+    }
+
+    return res.send({ success: true, profile, labs: labResults });
+  } catch (err) {
+    console.error("LOGIN ERROR:", err);
+    return res.status(500).send({ success: false, message: "เกิดข้อผิดพลาดในการเข้าสู่ระบบ" });
+  }
+});
+
+// --- LABS: public endpoint to get labs by idNumber (optional) --------------
+app.get("/labs/:idNumber", async (req, res) => {
+  const { idNumber } = req.params;
+  if (!db4) return res.status(501).send({ message: "ยังไม่ตั้งค่า DB4" });
+  try {
+    const [rows] = await db4.query(listLab, [idNumber]);
+    res.send({ success: true, results: rows });
+  } catch (err) {
+    console.error("LABS ERROR:", err);
+    res.status(500).send({ success: false, message: "เกิดข้อผิดพลาดในการดึงข้อมูลแลบ" });
+  }
+});
+
+// --- START ------------------------------------------------------------------
+app.listen(PORT, () => {
+  console.log(`เซิร์ฟเวอร์กำลังทำงานที่พอร์ต ${PORT}`);
+});
+
+
