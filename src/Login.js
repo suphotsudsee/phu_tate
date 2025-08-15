@@ -4,33 +4,39 @@ import { useNavigate } from "react-router-dom";
 import "./App.css";
 
 const Login = () => {
-  const [idNumber, setIdNumber] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [formData, setFormData] = useState({
+    idNumber: "",
+    password: "",
+  });
   const navigate = useNavigate();
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     try {
-      const response = await axios.post(
-        "https://server-registration-app.phoubon.in.th/login",
-        { idNumber, password }
-      );
+      const response = await axios.post("/login", formData);
       const results = response?.data?.results;
-      if (results && results.length > 0) {
+
+      if (response?.data?.success && results && results.length > 0) {
         navigate("/person", {
           state: { labresult: results[0], allresult: results },
         });
       } else {
-        setError("ไม่พบข้อมูล");
+        const message = response?.data?.message || "ไม่พบข้อมูล";
+        alert(message);
       }
-    } catch (err) {
-      console.error(err);
+    } catch (error) {
+      console.error(error);
       const message =
-        err.response?.data?.message ||
-        "เกิดข้อผิดพลาดในการเชื่อมต่อกับเซิร์ฟเวอร์";
-      setError(message);
+        error.response?.data?.message || "เกิดข้อผิดพลาดในการเข้าสู่ระบบ";
+      alert(message);
     }
   };
 
@@ -42,28 +48,27 @@ const Login = () => {
         <label>เลขบัตรประชาชน:</label>
         <input
           type="text"
-          value={idNumber}
-          onChange={(e) => setIdNumber(e.target.value)}
+          name="idNumber"
+          value={formData.idNumber}
+          onChange={handleChange}
           required
         />
 
-        <br />
         <label>รหัสผ่าน: </label>
         <input
           type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          name="password"
+          value={formData.password}
+          onChange={handleChange}
           required
         />
 
-        <br />
         <div className="buttons">
           <button type="submit" className="submit-button">
             เข้าสู่ระบบ
           </button>
         </div>
       </form>
-      {error && <p style={{ color: "red" }}>{error}</p>}
     </div>
   );
 };
