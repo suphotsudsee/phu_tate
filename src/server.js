@@ -4,9 +4,11 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 const bcrypt = require('bcryptjs');
 
-const app = express();
-app.use(cors());
-app.use(bodyParser.json());
+// สร้างฟังก์ชันสำหรับเริ่มต้นเซิร์ฟเวอร์ Express
+function createServer() {
+  const app = express();
+  app.use(cors());
+  app.use(bodyParser.json());
 
 const db = mysql.createPool({
   connectionLimit: 10,
@@ -91,7 +93,7 @@ const db4 = mysql.createConnection({
 //   console.log("เชื่อมต่อกับฐานข้อมูลสำเร็จ");
 // });
 
-app.get("/person",async (req, res) => {
+  app.get("/person",async (req, res) => {
 try {
   // Query data from MySQL
   const [results] = await db.query("SELECT * FROM users WHERE first_name = 'suphot' limit 10");
@@ -106,9 +108,9 @@ try {
     message: "Something went wrong.",
   });
 }
-});
+  });
 
-app.post("/register", async (req, res) => {
+  app.post("/register", async (req, res) => {
   const { firstName, lastName, idNumber, phone, password } = req.body;
   console.log("======>",{...req.body});
 
@@ -138,10 +140,10 @@ app.post("/register", async (req, res) => {
     console.error("เกิดข้อผิดพลาด:", err);
     res.status(500).send({ message: "เกิดข้อผิดพลาดในการลงทะเบียน" });
   }
-});
+  });
 
 
-app.post("/login",async (req, res) => {
+  app.post("/login",async (req, res) => {
   const { idNumber, password } = req.body;
   console.log("======>",{...req.body});
 
@@ -205,8 +207,17 @@ chospcode.hospname
     console.error("เกิดข้อผิดพลาด:", err);
     res.status(500).send({ message: "เกิดข้อผิดพลาดในการดึงข้อมูลการตรวจเลือด" });
   }
-});
+  });
 
-app.listen(5001, () => {
-  console.log("เซิร์ฟเวอร์กำลังทำงานที่พอร์ต 5001");
-});
+  return app;
+}
+
+// หากไฟล์นี้ถูกเรียกโดยตรง ให้เริ่มเซิร์ฟเวอร์ทันที
+if (require.main === module) {
+  const app = createServer();
+  app.listen(5001, () => {
+    console.log("เซิร์ฟเวอร์กำลังทำงานที่พอร์ต 5001");
+  });
+}
+
+module.exports = createServer;

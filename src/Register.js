@@ -21,10 +21,8 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post(
-        "https://server-registration-app.phoubon.in.th/register",
-        formData
-      );
+      // ส่งคำขอลงทะเบียนไปยังเซิร์ฟเวอร์ภายในแอปเอง
+      const response = await axios.post("/register", formData);
       alert(response?.data?.message);
     } catch (error) {
       console.error(error);
