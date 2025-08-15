@@ -6,15 +6,15 @@ import Login from "./Login";
 import BarChart from "./BarChart";
 import "./App.css";
 
-
 function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter future={{ v7_relativeSplatPath: true }}>
       <Routes>
-        <Route exact path="/" element={<Register />} />
-        <Route exact path="person" element={<Person />} />
-        <Route exact path="barchart" element={<BarChart />} />
-        <Route exact path="login" element={<Login />} />
+        {/* ✅ React Router v6+ ไม่ต้องใช้ exact */}
+        <Route path="/" element={<Register />} />
+        <Route path="person" element={<Person />} />
+        <Route path="barchart" element={<BarChart />} />
+        <Route path="login" element={<Login />} />
       </Routes>
     </BrowserRouter>
   );
