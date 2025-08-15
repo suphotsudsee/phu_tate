@@ -10,9 +10,9 @@ app.use(bodyParser.json());
 
 const db = mysql.createPool({
   connectionLimit: 10,
-  host: 'localhost',
+  host: '192.168.25.122',
   user: 'suphot',
-  password: 'u2eNBathhjUIS4Q2Vuxj',
+  password: '12345678',
   database: 'registrationdb',
   queueLimit: 0,
 }).promise();
@@ -25,6 +25,7 @@ const db = mysql.createConnection({
   database: "registrationdb",
 });
 */
+/*
 const db1 = mysql.createPool({
   host: '192.168.25.124',
   user: 'root',
@@ -59,6 +60,7 @@ const db3 = mysql.createPool({
   connectionLimit: 10,
   queueLimit: 0,
 }).promise();
+*/
 
 const db4 = mysql.createPool({
 
