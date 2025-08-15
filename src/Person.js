@@ -5,38 +5,43 @@ import BarChart from "./BarChart";
 
 function Person() {
   const { state } = useLocation();
- // console.log("======>", state.allresult);
 
-// กรองข้อมูล
-const filteredData = state.allresult.map((item) => ({
-  date: new Date(
-    new Date(item.DATE_SERV).toLocaleString('en-US', { timeZone: 'Asia/Bangkok' })
-  )
-    .toISOString()
-    .split("T")[0], // แปลงเป็น YYYY-MM-DD และเปลี่ยนโซนเป็น Asia/Bangkok
-  labResult: parseFloat(item.LABRESULT),
-  hospname: item.hospname,
-}))
-.sort((a, b) => new Date(a.date) - new Date(b.date)) // เรียงลำดับวันที่
-.slice(-10); // จำกัดข้อมูลให้เหลือแค่ 10 รายการสุดท้าย
+  // หากไม่มีข้อมูลให้แสดงข้อความแจ้งเตือน
+  if (!state || !state.allresult || state.allresult.length === 0) {
+    return <div>ไม่พบข้อมูลการตรวจ</div>;
+  }
 
-console.log("======>", filteredData[9]);
+  // กรองและจัดรูปแบบข้อมูลให้อยู่ในรูปแบบที่ต้องการ
+  const filteredData = state.allresult
+    .map((item) => ({
+      date: new Date(
+        new Date(item.DATE_SERV).toLocaleString("en-US", {
+          timeZone: "Asia/Bangkok",
+        })
+      )
+        .toISOString()
+        .split("T")[0], // แปลงเป็น YYYY-MM-DD และเปลี่ยนโซนเป็น Asia/Bangkok
+      labResult: parseFloat(item.LABRESULT),
+      hospname: item.hospname,
+    }))
+    .sort((a, b) => new Date(a.date) - new Date(b.date)) // เรียงลำดับวันที่
+    .slice(-10); // จำกัดข้อมูลให้เหลือแค่ 10 รายการสุดท้าย
 
-  const d = new Date(filteredData[9].date);
-  //const dd = moment(d).locale('th').format('D MMMM yyyy');
-  const dresult = d.toLocaleDateString('th-TH', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  })
-  //console.log("ssss====>",dresult);
+  // ใช้ข้อมูลรายการล่าสุดแทนการอ้างอิงตำแหน่งที่ 9 เพื่อป้องกันข้อมูลไม่ครบ 10 รายการ
+  const latestData = filteredData[filteredData.length - 1];
+  const d = new Date(latestData.date);
+  const dresult = d.toLocaleDateString("th-TH", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 
   return (
-<>
+    <>
     <div class="container">
-      <div class="header-text">{filteredData[9].labResult}</div>
+      <div class="header-text">{latestData.labResult}</div>
       <div >วันที่ตรวจ : {dresult}</div>
-      <div >{filteredData[9].hospname}</div>
+      <div >{latestData.hospname}</div>
       <div class="main-title">น้ำตาลในเลือด</div>
 
       <div class="result-number">70-100</div>
