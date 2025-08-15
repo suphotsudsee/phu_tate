@@ -17,16 +17,20 @@ const Login = () => {
         "https://server-registration-app.phoubon.in.th/login",
         { idNumber, password }
       );
-     // console.log("xxx==>",response.data.results[0]);
-      if (response.data.results) {
-        
-        navigate("/person", { state: { labresult: response.data.results[0], allresult: response.data.results } });
+      const results = response?.data?.results;
+      if (results && results.length > 0) {
+        navigate("/person", {
+          state: { labresult: results[0], allresult: results },
+        });
       } else {
         setError("ไม่พบข้อมูล");
       }
     } catch (err) {
       console.error(err);
-      setError("เกิดข้อผิดพลาดในการเชื่อมต่อกับเซิร์ฟเวอร์");
+      const message =
+        err.response?.data?.message ||
+        "เกิดข้อผิดพลาดในการเชื่อมต่อกับเซิร์ฟเวอร์";
+      setError(message);
     }
   };
 
