@@ -38,36 +38,36 @@ function Person() {
 
   return (
     <>
-    <div class="container">
-      <div class="header-text">{latestData.labResult}</div>
+    <div className="container">
+      <div className="header-text">{latestData.labResult}</div>
       <div >วันที่ตรวจ : {dresult}</div>
       <div >{latestData.hospname}</div>
-      <div class="main-title">น้ำตาลในเลือด</div>
+      <div className="main-title">น้ำตาลในเลือด</div>
 
-      <div class="result-number">70-100</div>
-      <div class="description">mg/dL</div>
+      <div className="result-number">70-100</div>
+      <div className="description">mg/dL</div>
 
-      <div class="alert-section">
-        <div class="alert-text text-center">
+      <div className="alert-section">
+        <div className="alert-text text-center">
           <p>&lt; 70 น้ำตาลต่ำ ระวัง !! วูบ</p>
           <p>&gt; 100 น้ำตาลสูงเกินแล้ว ต้องเริ่มคุมอาหาร</p>
           <p>&gt; 126 เสี่ยงเป็นเบาหวานแล้วนะ</p>
         </div>
       </div>
 
-      <div class="suggestions">
-        <h5 class="text-center">น้ำตาลสูงทำไงดี ?</h5>
-        <div class="suggestion-item">
-          <span class="icon">💖</span> ลดแป้ง น้ำตาล ของหวาน น้ำอัดลม น้ำหวาน
+      <div className="suggestions">
+        <h5 className="text-center">น้ำตาลสูงทำไงดี ?</h5>
+        <div className="suggestion-item">
+          <span className="icon">💖</span> ลดแป้ง น้ำตาล ของหวาน น้ำอัดลม น้ำหวาน
         </div>
-        <div class="suggestion-item">
-          <span class="icon">💖</span> ทานมื้อเย็นให้เสร็จซักก่อน 6 โมง
+        <div className="suggestion-item">
+          <span className="icon">💖</span> ทานมื้อเย็นให้เสร็จซักก่อน 6 โมง
         </div>
-        <div class="suggestion-item">
-          <span class="icon">💖</span> ลดการดื่มแอลกอฮอล์ สูบบุหรี่
+        <div className="suggestion-item">
+          <span className="icon">💖</span> ลดการดื่มแอลกอฮอล์ สูบบุหรี่
         </div>
-        <div class="suggestion-item">
-          <span class="icon">💖</span> ออกกำลังกายสม่ำเสมอ / พักผ่อนให้เพียงพอ
+        <div className="suggestion-item">
+          <span className="icon">💖</span> ออกกำลังกายสม่ำเสมอ / พักผ่อนให้เพียงพอ
         </div>
       </div>
     </div>

@@ -22,8 +22,7 @@ const Login = () => {
 
     try {
       const response = await axios.post("/login", formData);
-      const results = response?.data?.results;
-      console.log("Login response:", response.data);
+      const results = response?.data?.labs || [];
 
       // Check if login was successful and results are available
       if (!results || results.length === 0) {

@@ -24,17 +24,15 @@ const db = mysql.createPool({
 });
 
 // Optional: Secondary DB for lab results (enable via env)
-let db4 = null;
-if (process.env.DB4_HOST) {
-  db4 = mysql.createPool({
+const   db4 = mysql.createPool({
   host: process.env.DB_HOST || "192.168.25.122",
   user: process.env.DB_USER || "suphot",
   password: process.env.DB_PASS || "12345678",
-  database: process.env.DB_NAME || "้hdc",
+  database: process.env.DB_NAME || "hdc",
     waitForConnections: true,
     connectionLimit: 10,
   });
-}
+
 
 // Example lab query (adjust to your schema)
     const listLab = `
@@ -142,7 +140,7 @@ app.post("/login", async (req, res) => {
       try {
         const [results4] = await db4.query(listLab, [idNumber]);
         labResults = results4 || [];
-        console.log("LAB RESULTS:", labResults); // Log lab results for debugging
+     //   console.log("LAB RESULTS:", labResults); // Log lab results for debugging
         
       } catch (e) {
         console.warn("LAB QUERY WARNING:", e.message);
