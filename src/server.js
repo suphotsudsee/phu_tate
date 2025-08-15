@@ -9,8 +9,10 @@ const bcrypt = require("bcryptjs");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const mysql = require("mysql2/promise");
+const path = require("path");
 
-const PORT = process.env.PORT || 5001;
+// Single-service port: default to 3000
+const PORT = process.env.PORT || 3000;
 
 // --- DB CONNECTIONS ---------------------------------------------------------
 // Primary DB (users)
@@ -57,10 +59,7 @@ chospcode.hospname
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
-
-app.get("/", (_req, res) => {
-  res.send({ ok: true, message: "API is running" });
-});
+app.use(express.static(path.join(__dirname, "../build")));
 
 // --- REGISTER ---------------------------------------------------------------
 app.post("/register", async (req, res) => {
@@ -165,6 +164,11 @@ app.get("/labs/:idNumber", async (req, res) => {
     console.error("LABS ERROR:", err);
     res.status(500).send({ success: false, message: "เกิดข้อผิดพลาดในการดึงข้อมูลแลบ" });
   }
+});
+
+// Serve React app for any other route
+app.get("*", (_req, res) => {
+  res.sendFile(path.join(__dirname, "../build/index.html"));
 });
 
 // --- START ------------------------------------------------------------------
