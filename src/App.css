@@ -1,0 +1,81 @@
+.container {
+  width: 300px;
+  margin: auto;
+  padding: 20px;
+  background-color: #f0f8ff;
+  border-radius: 10px;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.header {
+  background-color: #3366cc;
+  color: white;
+  padding: 10px;
+  margin-bottom: 20px;
+  border-radius: 10px 10px 0 0;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+}
+
+label {
+  margin-top: 10px;
+  text-align: center;
+  font-weight: bold;
+}
+
+input {
+  padding: 8px;
+  margin-top: 5px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 16px;
+}
+
+.buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.back-button {
+  background-color: #d3d3d3;
+  color: black;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.submit-button {
+  background-color: #3366cc;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.back-button:hover,
+.submit-button:hover {
+  opacity: 0.8;
+}
+
+.chart-container {
+/*  width: 80%; /* กำหนดความกว้าง */
+/*  height: 600%; /* ความสูงมากกว่าความกว้าง 50% */
+  margin: 0 auto;
+  position: relative;
+/*  margin: auto; */
+  height: 50vh;
+  width: 90vw;
+}
+
+h1 {
+  text-align: center;
+}
