@@ -11,8 +11,8 @@ const bodyParser = require("body-parser");
 const mysql = require("mysql2/promise");
 const path = require("path");
 
-// Single-service port: default to 3000
-const PORT = process.env.PORT || 3000;
+// Single-service port: default to 3088
+const PORT = process.env.PORT || 3088;
 
 // --- DB CONNECTIONS ---------------------------------------------------------
 // Primary DB (users)
