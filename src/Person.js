@@ -103,7 +103,7 @@ function Person() {
           </div>
         </div>
       </div>
-       <div className="container">
+      
       <div className="header-text">{latestData.labResult}</div>
         {resultDate && <div>วันที่ตรวจ : {resultDate}</div>}
       <div >{latestData.hospname}</div>
@@ -135,7 +135,7 @@ function Person() {
           <span className="icon">💖</span> ออกกำลังกายสม่ำเสมอ / พักผ่อนให้เพียงพอ
         </div>
       </div>
-    </div>
+  
       <div>
         <h1>ผลตรวจน้ำตาลในเลือด</h1>
         <BarChart data={filteredData} />

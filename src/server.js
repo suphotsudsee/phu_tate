@@ -27,7 +27,7 @@ const db = mysql.createPool({
 
 // Optional: Secondary DB for lab results (enable via env)
 const   db4 = mysql.createPool({
-  host: process.env.DB_HOST || "192.168.25.122",
+  host: process.env.DB_HOST || "192.168.25.9",
   user: process.env.DB_USER || "suphot",
   password: process.env.DB_PASS || "12345678",
   database: process.env.DB_NAME || "hdc",
