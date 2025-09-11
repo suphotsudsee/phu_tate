@@ -96,7 +96,7 @@ function Person() {
         </div>
       </div>
       <div>
-        <h1>ผลตรวจ</h1>
+        <h1>ผลตรวจน้ำตาลในเลือด</h1>
         <BarChart data={filteredData} />
       </div>
     </>
