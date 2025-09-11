@@ -5,15 +5,10 @@ import BarChart from "./BarChart";
 
 function Person() {
   const { state } = useLocation();
-
-  // หากไม่มีข้อมูลให้แสดงข้อความแจ้งเตือน
-  if (!state || !state.allresult || state.allresult.length === 0) {
-    return <div>ไม่พบข้อมูลการตรวจ</div>;
-  }
-
   const [cvdRisk, setCvdRisk] = useState(null);
 
   useEffect(() => {
+    if (!state || !state.allresult || state.allresult.length === 0) return;
     const fetchRisk = async () => {
       try {
         const cid = state.allresult[0]?.CID;
@@ -29,6 +24,11 @@ function Person() {
     };
     fetchRisk();
   }, [state]);
+
+  // หากไม่มีข้อมูลให้แสดงข้อความแจ้งเตือน
+  if (!state || !state.allresult || state.allresult.length === 0) {
+    return <div>ไม่พบข้อมูลการตรวจ</div>;
+  }
 
   // กรองและจัดรูปแบบข้อมูลให้อยู่ในรูปแบบที่ต้องการ
   const filteredData = state.allresult
