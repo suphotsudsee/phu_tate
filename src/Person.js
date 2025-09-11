@@ -56,6 +56,14 @@ function Person() {
       })
     : null;
 
+  const resultDate = latestData
+    ? new Date(latestData.date).toLocaleDateString("th-TH", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })
+    : null;
+
   return (
     <>
       <div className="container">
@@ -97,7 +105,7 @@ function Person() {
       </div>
        <div className="container">
       <div className="header-text">{latestData.labResult}</div>
-      <div >วันที่ตรวจ : {dresult}</div>
+        {resultDate && <div>วันที่ตรวจ : {resultDate}</div>}
       <div >{latestData.hospname}</div>
       <div className="main-title">น้ำตาลในเลือด</div>
 
