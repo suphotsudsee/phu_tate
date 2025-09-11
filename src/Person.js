@@ -11,6 +11,25 @@ function Person() {
     return <div>ไม่พบข้อมูลการตรวจ</div>;
   }
 
+  const [cvdRisk, setCvdRisk] = useState(null);
+
+  useEffect(() => {
+    const fetchRisk = async () => {
+      try {
+        const cid = state.allresult[0]?.CID;
+        if (!cid) return;
+        const res = await fetch(`/cvdrisk/${cid}`);
+        const data = await res.json();
+        if (data.success && data.results && data.results.length > 0) {
+          setCvdRisk(data.results[0]);
+        }
+      } catch (err) {
+        console.error("CVD RISK ERROR:", err);
+      }
+    };
+    fetchRisk();
+  }, [state]);
+
   // กรองและจัดรูปแบบข้อมูลให้อยู่ในรูปแบบที่ต้องการ
   const filteredData = state.allresult
     .map((item) => ({
@@ -29,53 +48,58 @@ function Person() {
 
   // ใช้ข้อมูลรายการล่าสุดแทนการอ้างอิงตำแหน่งที่ 9 เพื่อป้องกันข้อมูลไม่ครบ 10 รายการ
   const latestData = filteredData[filteredData.length - 1];
-  const d = new Date(latestData.date);
-  const dresult = d.toLocaleDateString("th-TH", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  const riskDate = cvdRisk
+    ? new Date(cvdRisk.REF_DATE).toLocaleDateString("th-TH", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })
+    : null;
 
   return (
     <>
-    <div className="container">
-      <div className="header-text">{latestData.labResult}</div>
-      <div >วันที่ตรวจ : {dresult}</div>
-      <div >{latestData.hospname}</div>
-      <div className="main-title">น้ำตาลในเลือด</div>
+      <div className="container">
+        <div className="header-text">
+          {cvdRisk ? cvdRisk.Thai_ASCVD2_Risk_percent.toFixed(1) : "..."}
+        </div>
+        {riskDate && <div>วันที่ตรวจ : {riskDate}</div>}
+        <div>{latestData.hospname}</div>
+        <div className="main-title">ความเสี่ยงโรคหัวใจและหลอดเลือด (10 ปี)</div>
 
-      <div className="result-number">70-100</div>
-      <div className="description">mg/dL</div>
+        <div className="result-number">
+          {cvdRisk ? cvdRisk.Risk_Category_TH : ""}
+        </div>
+        <div className="description">% ความเสี่ยง</div>
 
-      <div className="alert-section">
-        <div className="alert-text text-center">
-          <p>&lt; 70 น้ำตาลต่ำ ระวัง !! วูบ</p>
-          <p>&gt; 100 น้ำตาลสูงเกินแล้ว ต้องเริ่มคุมอาหาร</p>
-          <p>&gt; 126 เสี่ยงเป็นเบาหวานแล้วนะ</p>
+        <div className="alert-section">
+          <div className="alert-text text-center">
+            <p>&lt; 10% ความเสี่ยงต่ำ</p>
+            <p>10-20% ความเสี่ยงปานกลาง</p>
+            <p>&gt; 20% ความเสี่ยงสูง</p>
+          </div>
+        </div>
+
+        <div className="suggestions">
+          <h5 className="text-center">ลดความเสี่ยงทำอย่างไร ?</h5>
+          <div className="suggestion-item">
+            <span className="icon">💖</span> ควบคุมอาหารและออกกำลังกาย
+          </div>
+          <div className="suggestion-item">
+            <span className="icon">💖</span> เลิกสูบบุหรี่
+          </div>
+          <div className="suggestion-item">
+            <span className="icon">💖</span> ตรวจสุขภาพประจำปี
+          </div>
+          <div className="suggestion-item">
+            <span className="icon">💖</span> พักผ่อนให้เพียงพอ
+          </div>
         </div>
       </div>
-
-      <div className="suggestions">
-        <h5 className="text-center">น้ำตาลสูงทำไงดี ?</h5>
-        <div className="suggestion-item">
-          <span className="icon">💖</span> ลดแป้ง น้ำตาล ของหวาน น้ำอัดลม น้ำหวาน
-        </div>
-        <div className="suggestion-item">
-          <span className="icon">💖</span> ทานมื้อเย็นให้เสร็จซักก่อน 6 โมง
-        </div>
-        <div className="suggestion-item">
-          <span className="icon">💖</span> ลดการดื่มแอลกอฮอล์ สูบบุหรี่
-        </div>
-        <div className="suggestion-item">
-          <span className="icon">💖</span> ออกกำลังกายสม่ำเสมอ / พักผ่อนให้เพียงพอ
-        </div>
-      </div>
-    </div>
       <div>
         <h1>ผลตรวจ</h1>
-        <BarChart data={filteredData}/>
+        <BarChart data={filteredData} />
       </div>
-</>
+    </>
   );
 }
 
