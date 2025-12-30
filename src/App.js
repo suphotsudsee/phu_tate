@@ -15,16 +15,22 @@ import Person from "./Person";
 import BarChart from "./BarChart";
 
 function App() {
-  // เปลี่ยนจากการเช็ค localStorage มาใช้ State แทน เพื่อรอ LIFF โหลด
-  const [, setIsAuthenticated] = useState(false);
+  // สถานะ login ของระบบเรา (แยกจากการ login LINE)
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   // เพิ่ม state สำหรับเก็บข้อมูลผู้ใช้ LINE
   const [lineProfile, setLineProfile] = useState(null);
   const [liffError, setLiffError] = useState(null);
 
   // 2. ใช้ useEffect เพื่อ Initialize LIFF เมื่อแอปเริ่มทำงาน
   useEffect(() => {
-    // ใส่ LIFF ID ที่ได้จาก LINE Developers Console ตรงนี้
-    const LIFF_ID = "2008799540-to0v6frF"; 
+    // ใส่ LIFF ID ที่ได้จาก LINE Developers Console ตรงนี้ หรือกำหนดผ่าน env REACT_APP_LIFF_ID
+    const LIFF_ID = process.env.REACT_APP_LIFF_ID || "2008799540-to0v6frF"; 
+
+    if (!LIFF_ID) {
+      console.error("Missing LIFF ID");
+      setLiffError("Missing LIFF ID");
+      return;
+    }
 
     liff
       .init({
@@ -45,8 +51,6 @@ function App() {
             // ในบริบท Mini App การที่เขาเปิดเข้ามาได้ แปลว่าเขา Authenticate กับ LINE แล้ว
             // คุณอาจจะถือว่า isAuthenticated = true เลยก็ได้
             // หรือจะเอา userId ไปเช็คกับ Database ของคุณอีกทีก็ได้
-            setIsAuthenticated(true); 
-
             // *** Optional: ถ้าอยากเชื่อมกับระบบ Login เดิม ***
             // คุณอาจจะเอา profile.userId ส่งไปที่ Backend ของคุณ
             // เพื่อตรวจสอบว่า userId นี้ตรงกับ user คนไหนในระบบ MySQL
@@ -66,6 +70,7 @@ function App() {
 
   // ฟังก์ชัน Login แบบเดิม (อาจจะไม่ได้ใช้ ถ้าพึ่งพา LINE Login 100%)
   const handleLogin = () => {
+    // ให้ backend login สำเร็จแล้วค่อย set เป็น true
     setIsAuthenticated(true);
   };
 
@@ -124,14 +129,14 @@ function App() {
         */}
         <Route
           path="/"
-          // ถ้ามี lineProfile แล้ว ให้ไปหน้า Home, ถ้าไม่มีให้ไป Login
-          element={lineProfile ? <Navigate to="/home" /> : <Login onLogin={handleLogin} />}
+          // ให้ login backend ก่อน ไม่ redirect ด้วย lineProfile อย่างเดียว
+          element={isAuthenticated ? <Navigate to="/home" /> : <Login onLogin={handleLogin} />}
         />
         <Route path="/register" element={<Register />} />
         <Route
           path="/home"
-          // เช็คว่ามี lineProfile หรือไม่
-          element={lineProfile ? <Person /> : <Navigate to="/" />}
+          // แสดง Home เฉพาะหลังจาก login backend แล้ว
+          element={isAuthenticated ? <Person /> : <Navigate to="/" />}
         />
         <Route
           path="/chart"
