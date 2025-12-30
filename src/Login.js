@@ -1,78 +1,74 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import "./App.css";
+import liff from "@line/liff"; // อย่าลืม import liff
 
 const Login = () => {
   const [formData, setFormData] = useState({
     idNumber: "",
     password: "",
   });
+  const [lineUserId, setLineUserId] = useState(""); // เก็บ LINE ID
   const navigate = useNavigate();
 
+  useEffect(() => {
+    // พยายามดึง LINE ID มารอไว้ก่อน
+    if (liff.isInClient() || liff.isLoggedIn()) {
+      liff.getProfile().then(profile => {
+        setLineUserId(profile.userId);
+        console.log("Got Line ID for binding:", profile.userId);
+      });
+    }
+  }, []);
+
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
-      const response = await axios.post("/login", formData);
-      const results = response?.data?.labs || [];
+      // ส่งข้อมูล Login พร้อม LINE User ID (ถ้ามี)
+      const payload = {
+        ...formData,
+        lineUserId: lineUserId // ส่งไปด้วยเพื่อทำการผูกบัญชี
+      };
 
-      // Check if login was successful and results are available
-      if (!results || results.length === 0) {
-        throw new Error("ไม่พบข้อมูลการตรวจ lab");
-      }
-
-      if (response?.data?.success && results && results.length > 0) {
+      const response = await axios.post("YOUR_API_URL/login", payload);
+      
+      if (response.data.success) {
+        alert("เข้าสู่ระบบและผูกบัญชี LINE เรียบร้อยแล้ว!");
+        
+        // ไปหน้า Person
         navigate("/person", {
-          state: { labresult: results[0], allresult: results },
+          state: { 
+            labresult: response.data.labs[0], 
+            allresult: response.data.labs 
+          },
         });
-      } else {
-        const message = response?.data?.message || "ไม่พบข้อมูล";
-        alert(message);
       }
     } catch (error) {
-      console.error(error);
-      const message =
-        error.response?.data?.message || "เกิดข้อผิดพลาดในการเข้าสู่ระบบ";
-      alert(message);
+      alert("รหัสผ่านไม่ถูกต้อง หรือ ไม่พบข้อมูล");
     }
   };
 
   return (
     <div className="container">
-      <h2 className="header">เข้าสู่ระบบ</h2>
-
+      <h2>เชื่อมต่อบัญชี</h2>
+      <p style={{fontSize: '12px', color: 'gray'}}>
+        กรุณากรอกเลข 13 หลักและรหัสผ่าน<br/>เพื่อผูกกับ LINE ของคุณ (ทำครั้งเดียว)
+      </p>
+      
       <form className="form" onSubmit={handleSubmit}>
+        {/* ... inputs เดิม ... */}
         <label>เลขบัตรประชาชน:</label>
-        <input
-          type="text"
-          name="idNumber"
-          value={formData.idNumber}
-          onChange={handleChange}
-          required
-        />
+        <input type="text" name="idNumber" onChange={handleChange} required />
 
-        <label>รหัสผ่าน: </label>
-        <input
-          type="password"
-          name="password"
-          value={formData.password}
-          onChange={handleChange}
-          required
-        />
+        <label>รหัสผ่าน:</label>
+        <input type="password" name="password" onChange={handleChange} required />
 
-        <div className="buttons">
-          <button type="submit" className="submit-button">
-            เข้าสู่ระบบ
-          </button>
-        </div>
+        <button type="submit">ยืนยันตัวตน</button>
       </form>
     </div>
   );
