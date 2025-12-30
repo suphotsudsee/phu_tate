@@ -31,22 +31,44 @@ function Person() {
   }
 
   // กรองและจัดรูปแบบข้อมูลให้อยู่ในรูปแบบที่ต้องการ
+  const parseDate = (raw) => {
+    if (!raw) return null;
+    // รองรับรูปแบบ YYYY-MM-DD, Date object หรือ YYYYMMDD (ตัวเลข/สตริง 8 หลัก)
+    if (raw instanceof Date) return raw;
+    const str = String(raw).trim();
+    if (str.length === 8 && /^\d{8}$/.test(str)) {
+      const y = str.slice(0, 4);
+      const m = str.slice(4, 6);
+      const d = str.slice(6, 8);
+      return new Date(`${y}-${m}-${d}`);
+    }
+    const parsed = new Date(str);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  };
+
   const filteredData = state.allresult
-    .map((item) => ({
-      date: new Date(
-        new Date(item.DATE_SERV).toLocaleString("en-US", {
-          timeZone: "Asia/Bangkok",
-        })
-      )
-        .toISOString()
-        .split("T")[0], // แปลงเป็น YYYY-MM-DD และเปลี่ยนโซนเป็น Asia/Bangkok
-      labResult: parseFloat(item.LABRESULT),
-      hospname: item.hospname,
-    }))
+    .map((item) => {
+      const parsed = parseDate(item.DATE_SERV);
+      if (!parsed) return null;
+      const dateBangkok = new Date(
+        parsed.toLocaleString("en-US", { timeZone: "Asia/Bangkok" })
+      );
+      if (Number.isNaN(dateBangkok.getTime())) return null;
+      return {
+        date: dateBangkok.toISOString().split("T")[0],
+        labResult: parseFloat(item.LABRESULT),
+        hospname: item.hospname,
+      };
+    })
+    .filter(Boolean)
     .sort((a, b) => new Date(a.date) - new Date(b.date)) // เรียงลำดับวันที่
     .slice(-10); // จำกัดข้อมูลให้เหลือแค่ 10 รายการสุดท้าย
 
   // ใช้ข้อมูลรายการล่าสุดแทนการอ้างอิงตำแหน่งที่ 9 เพื่อป้องกันข้อมูลไม่ครบ 10 รายการ
+  if (filteredData.length === 0) {
+    return <div>ไม่พบข้อมูลการตรวจ</div>;
+  }
+
   const latestData = filteredData[filteredData.length - 1];
   const riskDate = cvdRisk
     ? new Date(cvdRisk.REF_DATE).toLocaleDateString("th-TH", {

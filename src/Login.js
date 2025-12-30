@@ -27,6 +27,20 @@ const Login = ({ onLogin }) => {
         await liff.init({ liffId: LIFF_ID, withLoginOnExternalBrowser: true });
       } catch (err) {
         console.error("liff.init failed:", err);
+        // ถ้าเจอ invalid authorization code ให้เคลียร์ session แล้ว login ใหม่
+        if (
+          err &&
+          typeof err.message === "string" &&
+          err.message.toLowerCase().includes("authorization code")
+        ) {
+          try {
+            liff.logout();
+          } catch (e) {
+            console.warn("liff.logout failed", e);
+          }
+          liff.login({ redirectUri: window.location.href });
+          return;
+        }
         setIsLoading(false);
         return;
       }

@@ -31,48 +31,65 @@ const db4 = mysql.createPool({
 
 // --- SQL Helpers ---
 
-// 1. ดึง Lab ด้วย CID (วิธีหลัก)
+// 1. ดึง Lab ด้วย CID (ตาราง labfu)
 const fetchLabByCid = async (cid) => {
   if (!cid) return [];
+
   const sql = `
-    SELECT 
-      l.HOSPCODE,
-      DATE_FORMAT(l.DATE_SERV, '%Y-%m-%d') as service_date,
-      l.LABTEST as test_code,
-      COALESCE(c.TH, c.EN, l.LABTEST) as test_name, 
-      l.LABRESULT as result,
-      l.LABPLACE
-    FROM labfu l
-    LEFT JOIN clabtest_new c ON l.LABTEST = c.code
-    WHERE l.CID = ? 
-    ORDER BY l.DATE_SERV DESC LIMIT 20
+    SELECT
+      p.CID,
+      lf.PID,
+      lf.DATE_SERV,
+      lf.LABTEST,
+      lf.LABRESULT,
+      lf.D_UPDATE
+    FROM person AS p
+    JOIN labfu AS lf
+      ON lf.HOSPCODE = p.HOSPCODE
+     AND lf.PID = p.PID
+    WHERE p.CID = ?
+    ORDER BY lf.DATE_SERV DESC
+    LIMIT 20;
   `;
+
   try {
+    console.log("[LAB][CID] query:", sql.trim(), "params:", [cid]);
     const [rows] = await db4.query(sql, [cid]);
+    console.log(`[LAB][CID] fetch by CID=${cid} -> ${rows.length} rows`);
     return rows;
-  } catch (err) { console.error("Lab CID Error:", err.message); return []; }
+  } catch (err) {
+    console.error("Lab CID Error:", err.message);
+    return [];
+  }
 };
 
-// 2. ดึง Lab ด้วย HOSPCODE + PID (วิธีสำรอง เมื่อหาด้วย CID ไม่เจอ)
+// 2. ดึง Lab ด้วย HOSPCODE + PID (t_person_cid -> labfu)
 const fetchLabByPid = async (hospcode, pid) => {
   if (!hospcode || !pid) return [];
+
   const sql = `
     SELECT 
       l.HOSPCODE,
-      DATE_FORMAT(l.DATE_SERV, '%Y-%m-%d') as service_date,
-      l.LABTEST as test_code,
-      COALESCE(c.TH, c.EN, l.LABTEST) as test_name, 
-      l.LABRESULT as result,
+      l.PID,
+      l.DATE_SERV,
+      l.LABTEST,
+      l.LABRESULT,
       l.LABPLACE
     FROM labfu l
-    LEFT JOIN clabtest_new c ON l.LABTEST = c.code
     WHERE l.HOSPCODE = ? AND l.PID = ?
-    ORDER BY l.DATE_SERV DESC LIMIT 20
+    ORDER BY l.DATE_SERV DESC 
+    LIMIT 20;
   `;
+
   try {
+    console.log("[LAB][PID] query:", sql.trim(), "params:", [hospcode, pid]);
     const [rows] = await db4.query(sql, [hospcode, pid]);
+    console.log(`[LAB][PID] fetch by PID=${pid} HOSPCODE=${hospcode} -> ${rows.length} rows`);
     return rows;
-  } catch (err) { console.error("Lab PID Error:", err.message); return []; }
+  } catch (err) {
+    console.error("Lab PID Error:", err.message);
+    return [];
+  }
 };
 
 // 3. ดึงข้อมูลบุคคลจาก HDC
@@ -80,9 +97,13 @@ const fetchPersonFromHDC = async (cid) => {
   if (!cid) return null;
   const sql = `SELECT CID, NAME, LNAME, HOSPCODE, PID FROM t_person_cid WHERE CID = ? LIMIT 1`;
   try {
+    console.log("[HDC][PERSON] query:", sql.trim(), "params:", [cid]);
     const [rows] = await db4.query(sql, [cid]);
     return rows.length > 0 ? rows[0] : null;
-  } catch (err) { console.error("Person HDC Error:", err.message); return null; }
+  } catch (err) {
+    console.error("Person HDC Error:", err.message);
+    return null;
+  }
 };
 
 // --- API Routes ---
@@ -94,11 +115,13 @@ app.post("/line-auto-login", async (req, res) => {
 
   try {
     // 1. หา User ใน Local DB
-    const [users] = await db.query("SELECT * FROM users WHERE line_user_id = ?", [lineUserId]);
+    const userSql = "SELECT * FROM users WHERE line_user_id = ?";
+    console.log("[LOGIN][AUTO] query:", userSql, "params:", [lineUserId]);
+    const [users] = await db.query(userSql, [lineUserId]);
     if (users.length === 0) return res.send({ success: false, message: "User not found" });
 
     let user = users[0];
-    const idNumber = user.id_number;
+    const idNumber = (user.id_number || "").trim();
 
     // 2. ลองหา Lab ด้วย CID ก่อน
     let labResults = await fetchLabByCid(idNumber);
@@ -161,10 +184,11 @@ app.post("/login", async (req, res) => {
         first_name = VALUES(first_name), 
         last_name = VALUES(last_name)
     `;
+    console.log("[LOGIN][UPSERT] query:", upsertSql.trim(), "params:", [idNumber, lineUserId || null, firstName, lastName, "-", "LINE_LOGIN"]);
     await db.query(upsertSql, [idNumber, lineUserId || null, firstName, lastName, "-", "LINE_LOGIN"]);
 
     // 3. หา Lab (Step 1: By CID)
-    let labResults = await fetchLabByCid(idNumber);
+    let labResults = await fetchLabByCid(idNumber.trim());
 
     // 4. ถ้าไม่เจอ Lab และมีข้อมูลคน (Step 2: By PID)
     if (labResults.length === 0 && hdcPerson) {
