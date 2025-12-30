@@ -16,7 +16,7 @@ import BarChart from "./BarChart";
 
 function App() {
   // เปลี่ยนจากการเช็ค localStorage มาใช้ State แทน เพื่อรอ LIFF โหลด
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [, setIsAuthenticated] = useState(false);
   // เพิ่ม state สำหรับเก็บข้อมูลผู้ใช้ LINE
   const [lineProfile, setLineProfile] = useState(null);
   const [liffError, setLiffError] = useState(null);
@@ -24,7 +24,7 @@ function App() {
   // 2. ใช้ useEffect เพื่อ Initialize LIFF เมื่อแอปเริ่มทำงาน
   useEffect(() => {
     // ใส่ LIFF ID ที่ได้จาก LINE Developers Console ตรงนี้
-    const LIFF_ID = "2008799542-R23LJvFz"; 
+    const LIFF_ID = "2008799540-to0v6frF"; 
 
     liff
       .init({
