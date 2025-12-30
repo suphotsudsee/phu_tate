@@ -31,23 +31,36 @@ const db4 = mysql.createPool({
 
 // --- SQL Helpers ---
 
+// ... (ส่วนบนเหมือนเดิม)
+
 // 1. ดึง Lab ด้วย CID (ตาราง labfu)
 const fetchLabByCid = async (cid) => {
   if (!cid) return [];
 
   const sql = `
-    SELECT
+SELECT
       p.CID,
       lf.PID,
       lf.DATE_SERV,
       lf.LABTEST,
+      COALESCE(ct.TH, ct.EN) AS LABTEST_NAME, -- ชื่อแล็บ (ไทย หรือ อังกฤษ)
       lf.LABRESULT,
-      lf.D_UPDATE
+      lf.D_UPDATE,
+      lf.HOSPCODE,
+      lf.LABPLACE,
+      h.hosname AS HOSPNAME    -- ดึงชื่อโรงพยาบาลจากตาราง chospital
     FROM person AS p
     JOIN labfu AS lf
       ON lf.HOSPCODE = p.HOSPCODE
-     AND lf.PID = p.PID
+      AND lf.PID = p.PID
+    LEFT JOIN chospital AS h   -- JOIN กับตารางโรงพยาบาล
+      ON h.hospcode = lf.HOSPCODE
+    LEFT JOIN clabtest_new AS ct
+      ON ct.code = TRIM(lf.LABTEST)
+      OR ct.old_code = TRIM(lf.LABTEST)
     WHERE p.CID = ?
+    -- หากต้องการเฉพาะ 'น้ำตาล' ให้เปิดบรรทัดด้านล่างนี้ (รวมรหัส 0531102, 0531101, 0531104)
+    AND lf.LABTEST IN ('0531102', '0531101', '0531104') 
     ORDER BY lf.DATE_SERV DESC
     LIMIT 20;
   `;
@@ -63,6 +76,8 @@ const fetchLabByCid = async (cid) => {
   }
 };
 
+// ... (ส่วนอื่นๆ ของ server.js เหมือนเดิม)
+
 // 2. ดึง Lab ด้วย HOSPCODE + PID (t_person_cid -> labfu)
 const fetchLabByPid = async (hospcode, pid) => {
   if (!hospcode || !pid) return [];
@@ -73,9 +88,19 @@ const fetchLabByPid = async (hospcode, pid) => {
       l.PID,
       l.DATE_SERV,
       l.LABTEST,
+      COALESCE(ct.TH, ct.EN) AS LABTEST_NAME,
+      ct.TH AS LABTEST_TH,
+      ct.EN AS LABTEST_EN,
+      ct.old_code AS LABTEST_OLD_CODE,
       l.LABRESULT,
-      l.LABPLACE
+      l.LABPLACE,
+      h.hosname AS HOSPNAME
     FROM labfu l
+    LEFT JOIN clabtest_new AS ct
+      ON ct.code = TRIM(l.LABTEST)
+      OR ct.old_code = TRIM(l.LABTEST)
+    LEFT JOIN chospital AS h   -- JOIN กับตารางโรงพยาบาล
+      ON h.hospcode = l.HOSPCODE
     WHERE l.HOSPCODE = ? AND l.PID = ?
     ORDER BY l.DATE_SERV DESC 
     LIMIT 20;
