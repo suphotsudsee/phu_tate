@@ -3,7 +3,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import liff from "@line/liff";
 
-const LIFF_ID = process.env.REACT_APP_LIFF_ID || "2008799540-to0v6frF";
+const LIFF_ID = process.env.REACT_APP_LIFF_ID || "2008799542-R23LJvFz";
 
 const Login = ({ onLogin }) => {
   const [idNumber, setIdNumber] = useState("");
@@ -79,7 +79,6 @@ const Login = ({ onLogin }) => {
         lineDisplayName: displayName,
       });
       if (res.data.success) {
-        alert("เข้าสู่ระบบผ่าน LINE แล้ว");
         if (onLogin) onLogin();
         navigate("/home", {
           state: {

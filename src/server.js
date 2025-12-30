@@ -53,8 +53,8 @@ SELECT
     JOIN labfu AS lf
       ON lf.HOSPCODE = p.HOSPCODE
       AND lf.PID = p.PID
-    LEFT JOIN chospital AS h   -- JOIN กับตารางโรงพยาบาล
-      ON h.hospcode = lf.HOSPCODE
+    JOIN chospital AS h   -- JOIN กับตารางโรงพยาบาล
+      ON h.hoscode = lf.HOSPCODE
     LEFT JOIN clabtest_new AS ct
       ON ct.code = TRIM(lf.LABTEST)
       OR ct.old_code = TRIM(lf.LABTEST)
