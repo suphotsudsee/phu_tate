@@ -13,12 +13,28 @@ const Login = () => {
 
   useEffect(() => {
     // พยายามดึง LINE ID มารอไว้ก่อน
-    if (liff.isInClient() || liff.isLoggedIn()) {
-      liff.getProfile().then(profile => {
+    const initLiff = async () => {
+      const liffId = process.env.REACT_APP_LIFF_ID;
+      if (!liffId) {
+        console.error("Missing REACT_APP_LIFF_ID for liff.init()");
+        return;
+      }
+
+      try {
+        await liff.init({ liffId });
+      } catch (err) {
+        console.error("liff.init failed:", err);
+        return;
+      }
+
+      if (liff.isInClient() || liff.isLoggedIn()) {
+        const profile = await liff.getProfile();
         setLineUserId(profile.userId);
         console.log("Got Line ID for binding:", profile.userId);
-      });
-    }
+      }
+    };
+
+    initLiff();
   }, []);
 
   const handleChange = (e) => {

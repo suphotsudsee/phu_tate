@@ -24,7 +24,7 @@ function App() {
   // 2. ใช้ useEffect เพื่อ Initialize LIFF เมื่อแอปเริ่มทำงาน
   useEffect(() => {
     // ใส่ LIFF ID ที่ได้จาก LINE Developers Console ตรงนี้
-    const LIFF_ID = "YOUR_LIFF_ID_HERE"; 
+    const LIFF_ID = "2008799542-R23LJvFz"; 
 
     liff
       .init({
