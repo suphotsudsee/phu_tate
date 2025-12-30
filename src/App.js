@@ -1,22 +1,145 @@
-import React from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
+
+// 1. นำเข้า LIFF SDK
+import liff from '@line/liff';
+
+import Login from "./Login";
 import Register from "./Register";
 import Person from "./Person";
-import Login from "./Login";
 import BarChart from "./BarChart";
-import "./App.css";
 
 function App() {
+  // เปลี่ยนจากการเช็ค localStorage มาใช้ State แทน เพื่อรอ LIFF โหลด
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  // เพิ่ม state สำหรับเก็บข้อมูลผู้ใช้ LINE
+  const [lineProfile, setLineProfile] = useState(null);
+  const [liffError, setLiffError] = useState(null);
+
+  // 2. ใช้ useEffect เพื่อ Initialize LIFF เมื่อแอปเริ่มทำงาน
+  useEffect(() => {
+    // ใส่ LIFF ID ที่ได้จาก LINE Developers Console ตรงนี้
+    const LIFF_ID = "YOUR_LIFF_ID_HERE"; 
+
+    liff
+      .init({
+        liffId: LIFF_ID, 
+        // บังคับให้ Login ถ้าเปิดนอกแอป LINE
+        withLoginOnExternalBrowser: true, 
+      })
+      .then(() => {
+        // เริ่มต้น LIFF สำเร็จ
+        console.log("LIFF init succeeded");
+
+        // ตรวจสอบว่า user login LINE หรือยัง
+        if (liff.isLoggedIn()) {
+          // ถ้า login แล้ว ให้ดึงข้อมูลโปรไฟล์
+          liff.getProfile().then((profile) => {
+            console.log("User profile:", profile);
+            setLineProfile(profile);
+            // ในบริบท Mini App การที่เขาเปิดเข้ามาได้ แปลว่าเขา Authenticate กับ LINE แล้ว
+            // คุณอาจจะถือว่า isAuthenticated = true เลยก็ได้
+            // หรือจะเอา userId ไปเช็คกับ Database ของคุณอีกทีก็ได้
+            setIsAuthenticated(true); 
+
+            // *** Optional: ถ้าอยากเชื่อมกับระบบ Login เดิม ***
+            // คุณอาจจะเอา profile.userId ส่งไปที่ Backend ของคุณ
+            // เพื่อตรวจสอบว่า userId นี้ตรงกับ user คนไหนในระบบ MySQL
+          });
+        } else {
+          // ถ้ายังไม่ login (กรณีเปิด external browser แล้วไม่ได้ตั้ง withLoginOnExternalBrowser)
+          // liff.login(); 
+          setIsAuthenticated(false);
+        }
+      })
+      .catch((e) => {
+        console.error("LIFF init failed", e);
+        setLiffError(e.toString());
+      });
+  }, []);
+
+
+  // ฟังก์ชัน Login แบบเดิม (อาจจะไม่ได้ใช้ ถ้าพึ่งพา LINE Login 100%)
+  const handleLogin = () => {
+    setIsAuthenticated(true);
+  };
+
+  // ฟังก์ชัน Logout แบบเดิม + เพิ่ม LIFF logout
+  const handleLogout = () => {
+    if (liff.isLoggedIn()) {
+      liff.logout();
+    }
+    setIsAuthenticated(false);
+    setLineProfile(null);
+    localStorage.removeItem("isAuthenticated"); // เคลียร์ของเก่าด้วย
+  };
+
+
+  // ถ้า LIFF ยังโหลดไม่เสร็จ หรือมี Error อาจจะแสดงหน้า Loading/Error ก่อน
+  if (liffError) {
+    return (
+      <div style={{ padding: 20, textAlign: 'center' }}>
+        <h3>เกิดข้อผิดพลาดในการเชื่อมต่อ LINE</h3>
+        <p>{liffError}</p>
+        <p>กรุณาตรวจสอบ LIFF ID หรือการตั้งค่า</p>
+      </div>
+    );
+  }
+  
+  // แสดงหน้า Loading ระหว่างรอ LIFF init (optional แต่แนะนำ)
+  // if (!lineProfile && !liffError && /* logic check ว่ากำลังโหลดอยู่ */) {
+  //   return <div>Loading LINE info...</div>
+  // }
+
+
   return (
-    <BrowserRouter future={{ v7_relativeSplatPath: true }}>
+    <Router>
+      {/* ส่วนนี้เป็น Navigation bar ตัวอย่าง 
+        เพื่อให้เห็นภาพว่าเราเอาข้อมูล LINE มาโชว์ได้ 
+      */}
+      <nav style={{ padding: 10, background: '#eee', display: 'flex', justifyContent: 'space-between' }}>
+        <div>My App</div>
+        {lineProfile && (
+           <div style={{ display: 'flex', alignItems: 'center' }}>
+             <img 
+               src={lineProfile.pictureUrl} 
+               alt={lineProfile.displayName} 
+               style={{ width: 30, height: 30, borderRadius: '50%', marginRight: 10 }} 
+             />
+             <span>สวัสดี, {lineProfile.displayName}</span>
+             <button onClick={handleLogout} style={{marginLeft: 10}}>Logout</button>
+           </div>
+        )}
+      </nav>
+
       <Routes>
-        {/* ✅ React Router v6+ ไม่ต้องใช้ exact */}
-        <Route path="/" element={<Register />} />
-        <Route path="person" element={<Person />} />
-        <Route path="barchart" element={<BarChart />} />
-        <Route path="login" element={<Login />} />
+        {/* ปรับ Logic Router:
+           ถ้าเปิดใน Mini App เราอาจจะถือว่า login แล้วผ่าน LINE 
+           ให้ redirect ไปหน้า Home เลย ไม่ต้องเจอหน้า Login สีฟ้าๆ เดิมอีก
+        */}
+        <Route
+          path="/"
+          // ถ้ามี lineProfile แล้ว ให้ไปหน้า Home, ถ้าไม่มีให้ไป Login
+          element={lineProfile ? <Navigate to="/home" /> : <Login onLogin={handleLogin} />}
+        />
+        <Route path="/register" element={<Register />} />
+        <Route
+          path="/home"
+          // เช็คว่ามี lineProfile หรือไม่
+          element={lineProfile ? <Person /> : <Navigate to="/" />}
+        />
+        <Route
+          path="/chart"
+          // เช็คว่ามี lineProfile หรือไม่
+          element={lineProfile ? <BarChart /> : <Navigate to="/" />}
+        />
       </Routes>
-    </BrowserRouter>
+    </Router>
   );
 }
 
