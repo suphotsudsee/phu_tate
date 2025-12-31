@@ -61,9 +61,6 @@ function Person() {
   };
 
   // เลือกแสดงชื่อแล็บ (TH > EN > code)
-  const formatLabTestName = (row) =>
-    row?.LABTEST_NAME || row?.LABTEST_TH || row?.LABTEST_EN || row?.LABTEST || "-";
-
   // ชื่อแล็บภาษาไทย (ถ้าไม่มีใช้ชื่อรวม/รหัสแทน)
   const formatLabTestThai = (row) =>
     row?.LABTEST_TH || row?.LABTEST_NAME || row?.LABTEST || "-";
@@ -74,10 +71,6 @@ function Person() {
       
       // ถ้าวันที่แปลงไม่ได้ ให้ข้ามไป (หรือคุณอาจจะเลือก return เป็นวันที่ปัจจุบันหลอกๆ เพื่อเทสก็ได้)
       if (!parsed) return null; 
-
-      const dateBangkok = new Date(
-        parsed.toLocaleString("en-US", { timeZone: "Asia/Bangkok" })
-      );
 
       return {
         date: parsed.toISOString().split("T")[0], // ใช้วันที่ที่ parse ได้โดยตรงเพื่อความชัวร์

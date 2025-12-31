@@ -3,9 +3,10 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import liff from "@line/liff";
 
-const LIFF_ID = process.env.REACT_APP_LIFF_ID || "2008799542-R23LJvFz";
+const LIFF_ID = process.env.REACT_APP_LIFF_ID || "2008799540-to0v6frF";
 
 const Login = ({ onLogin }) => {
+  const log = (...args) => console.log("[Login]", ...args);
   const [idNumber, setIdNumber] = useState("");
   const [lineUserId, setLineUserId] = useState("");
   const [lineProfile, setLineProfile] = useState(null);
@@ -17,6 +18,7 @@ const Login = ({ onLogin }) => {
 
   useEffect(() => {
     const initLiff = async () => {
+      log("Initializing LIFF", { LIFF_ID });
       if (!LIFF_ID) {
         console.error("Missing LIFF ID");
         setIsLoading(false);
@@ -25,6 +27,7 @@ const Login = ({ onLogin }) => {
 
       try {
         await liff.init({ liffId: LIFF_ID, withLoginOnExternalBrowser: true });
+        log("liff.init succeeded");
       } catch (err) {
         console.error("liff.init failed:", err);
         // ถ้าเจอ invalid authorization code ให้เคลียร์ session แล้ว login ใหม่
@@ -46,12 +49,14 @@ const Login = ({ onLogin }) => {
       }
 
       if (!liff.isLoggedIn()) {
+        log("Not logged in, redirecting to liff.login()");
         liff.login();
         return;
       }
 
       try {
         const profile = await liff.getProfile();
+        log("Profile fetched", profile);
         setLineUserId(profile.userId);
         setLineProfile(profile);
         setIsLineClient(true);
@@ -71,6 +76,7 @@ const Login = ({ onLogin }) => {
   }, []);
 
   const autoLoginWithLine = async (userId, displayName) => {
+    log("autoLoginWithLine called", { userId, displayName });
     if (!userId) return;
     setLoading(true);
     try {
@@ -78,6 +84,7 @@ const Login = ({ onLogin }) => {
         lineUserId: userId,
         lineDisplayName: displayName,
       });
+      log("LINE auto login response", res.data);
       if (res.data.success) {
         if (onLogin) onLogin();
         navigate("/home", {
@@ -99,6 +106,7 @@ const Login = ({ onLogin }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    log("Handle submit fired", { idNumber, lineUserId });
 
     if (!lineUserId) {
       // พยายามให้ล็อกอิน LINE อีกครั้งเพื่อดึง userId
@@ -118,7 +126,9 @@ const Login = ({ onLogin }) => {
         lineDisplayName: lineProfile?.displayName,
       };
 
+      log("Submitting login payload", payload);
       const response = await axios.post("/login", payload);
+      log("Login response", response.data);
 
       if (response.data.success) {
         if (onLogin) onLogin();
