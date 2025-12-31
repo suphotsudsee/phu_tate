@@ -97,8 +97,14 @@ const Login = ({ onLogin }) => {
         alert("ยังไม่ได้ผูกบัญชี LINE กับระบบ");
       }
     } catch (err) {
-      console.error("LINE auto login failed:", err);
-      alert("ไม่สามารถเข้าสู่ระบบผ่าน LINE ได้");
+      const errInfo = {
+        message: err?.message,
+        status: err?.response?.status,
+        data: err?.response?.data,
+        url: err?.config?.url,
+      };
+      console.error("LINE auto login failed:", errInfo);
+      alert(`ไม่สามารถเข้าสู่ระบบผ่าน LINE ได้ (status: ${errInfo.status || "unknown"})`);
     } finally {
       setLoading(false);
     }
@@ -142,7 +148,12 @@ const Login = ({ onLogin }) => {
         alert("ไม่พบข้อมูล");
       }
     } catch (error) {
-      alert("ไม่พบข้อมูลหรือเกิดข้อผิดพลาด");
+      console.error("Manual login failed:", {
+        message: error?.message,
+        status: error?.response?.status,
+        data: error?.response?.data,
+      });
+      alert("ไม่พบข้อมูลหรือเกิดข้อผิดพลาด (ดู console สำหรับรายละเอียด)");
     } finally {
       setLoading(false);
     }
